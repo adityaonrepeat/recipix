@@ -1,17 +1,42 @@
 import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 import cors from "cors";
+import authRoutes from "./routes/auth";
+import recipeRoutes from "./routes/recipe";
+
+dotenv.config();
 
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-// ✅ Allow frontend to talk to backend
-app.use(cors({
-  origin: "http://localhost:5173", // your Vite dev server
-  credentials: true,
-}));
+const PORT = process.env.PORT || 4000;
+const MONGO_URI = process.env.MONGO_URI || "";
 
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "recipix-backend", timestamp: new Date().toISOString() });
+// ✅ Extend Express Request type so req.user doesn’t show red lines
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
+
+// ✅ Connect to MongoDB
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
+
+// ✅ Health check route
+app.get("/", (req, res) => {
+  res.json({ status: "Recipix API running" });
 });
 
-const port = 4000;
-app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+// ✅ Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/recipes", recipeRoutes);
+
+// ✅ Start server
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

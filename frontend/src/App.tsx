@@ -1,21 +1,30 @@
-import { useEffect, useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import { useAuth } from "./context/AuthContext";
+import type { JSX } from "react";
 
-function App() {
-  const [health, setHealth] = useState<string>("Loading...");
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { token } = useAuth();
+  return token ? children : <Navigate to="/login" replace />;
+};
 
-  useEffect(() => {
-    fetch("http://localhost:4000/api/health")
-      .then(res => res.json())
-      .then(data => setHealth(data.status))
-      .catch(() => setHealth("Error"));
-  }, []);
-
+export default function App() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
-      <h1 className="text-4xl font-bold mb-4">Recipix Frontend</h1>
-      <p>Backend status: <span className="font-mono">{health}</span></p>
-    </div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
-
-export default App;
